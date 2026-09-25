@@ -1,0 +1,120 @@
+services:
+
+  user-db:
+    image: postgres:17
+    container_name: eventhub-user-db
+    environment:
+      POSTGRES_DB: eventhub_users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventhub_users"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  user-service:
+    build:
+      context: ./user-service
+    container_name: eventhub-user-service
+    environment:
+      DB_URL: jdbc:postgresql://user-db:5432/eventhub_users
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8081:8081"
+    depends_on:
+      user-db:
+        condition: service_healthy
+
+  event-db:
+    image: postgres:17
+    container_name: eventhub-event-db
+    environment:
+      POSTGRES_DB: eventhub_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - event-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventhub_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  event-service:
+    build:
+      context: ./event-service
+    container_name: eventhub-event-service
+    environment:
+      DB_URL: jdbc:postgresql://event-db:5432/eventhub_events
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8082:8082"
+    depends_on:
+      event-db:
+        condition: service_healthy
+
+  booking-db:
+    image: postgres:17
+    container_name: eventhub-booking-db
+    environment:
+      POSTGRES_DB: eventhub_bookings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - booking-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventhub_bookings"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  booking-service:
+    build:
+      context: ./booking-service
+    container_name: eventhub-booking-service
+    environment:
+      DB_URL: jdbc:postgresql://booking-db:5432/eventhub_bookings
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      USER_SERVICE_URL: http://user-service:8081
+      EVENT_SERVICE_URL: http://event-service:8082
+    ports:
+      - "8083:8083"
+    depends_on:
+      booking-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: eventhub-api-gateway
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      EVENT_SERVICE_URL: http://event-service:8082
+      BOOKING_SERVICE_URL: http://booking-service:8083
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - event-service
+      - booking-service
+
+volumes:
+  user-db-data:
+  event-db-data:
+  booking-db-data:
