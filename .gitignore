@@ -29,3 +29,6 @@ Thumbs.db
 
 # Logs
 logs/
+
+# Kubernetes local secrets
+k8s/eventhub-db-secret.yaml
