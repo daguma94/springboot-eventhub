@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: eventhub-api-gateway:k8s-v1
+          image: eventhub-api-gateway:k8s-v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

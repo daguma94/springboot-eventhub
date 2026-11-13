@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: event-service
-          image: eventhub-event-service:k8s-v1
+          image: eventhub-event-service:k8s-v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
@@ -33,6 +33,9 @@ spec:
                 secretKeyRef:
                   name: eventhub-db-secret
                   key: DB_PASSWORD
+
+            - name: OPENAPI_SERVER_URL
+              value: http://localhost:30081
 
 ---
 apiVersion: v1
